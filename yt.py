@@ -2,7 +2,7 @@ import time
 import random
 import json
 import sys
-import os
+import shutil, tempfile, os
 import threading
 from seleniumbase import Driver
 from selenium.webdriver.common.by import By
@@ -23,16 +23,22 @@ UBLOCK_EXTENSION_PATH = "AdBlock"  # Path to UBlock Origin extension
 # Setup Chrome with Selenium and ChromeOptions
 def get_driver():
     is_new_profile = not os.path.exists(CHROME_PROFILE_PATH)
+    
+    cached_profile_path = os.path.abspath("chrome-profile")
+    temp_profile_path = tempfile.mkdtemp()
 
     if is_new_profile:
         print("🆕 New Chrome profile created.")
         os.makedirs(CHROME_PROFILE_PATH)  # Create profile directory if it doesn't exist
     else:
         print("✅ Chrome profile exists")
+        if os.path.exists(cached_profile_path):
+            shutil.copytree(cached_profile_path, temp_profile_path, dirs_exist_ok=True)
+        driver = Driver(uc=True, headless=True, incognito=False, user_data_dir=temp_profile_path)
     
-    driver = Driver(uc=True, headless=False, incognito=False, user_data_dir=CHROME_PROFILE_PATH)
 
     if is_new_profile:
+        driver = Driver(uc=True, headless=True, incognito=False, user_data_dir=CHROME_PROFILE_PATH)
         print("✅ Attempting to load cookies...")
         load_cookies(driver)
 
